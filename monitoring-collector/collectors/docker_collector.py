@@ -2,10 +2,18 @@ import docker
 import time
 import redis
 import json
+import os
 def main():
     client = docker.from_env()
     print("Docker Monitor started...")
-    r=redis.Redis(host='redis', port=6379, decode_responses=True)
+    redis_password = os.getenv('REDIS_PASSWORD', 'your_secure_redis_password_123')
+
+    r = redis.Redis(
+        host='redis',
+        port=6379, 
+        password=redis_password,
+        decode_responses=True
+    )
     while True:
         try:
             containers = client.containers.list(all=True)
