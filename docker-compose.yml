@@ -3,10 +3,11 @@ services:
 #basement
   nginx:
     image: nginx:alpine
+    container_name: nginx_container_reverse_proxy_app
     ports:
       - "80:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf 
     depends_on:
       - frontend
       - backend
@@ -15,8 +16,6 @@ services:
   frontend:
     build: ./frontend
     container_name: frontend_container_app
-    ports:
-      - "3000:3000"
     networks:
       - app-network
     depends_on:
@@ -29,8 +28,7 @@ services:
       - DATABASE_URL=postgresql://app_user:app_pass@postgres:5432/postgres_db
       - REDIS_URL=redis://redis:6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-    ports:
-      - "8000:8000"
+
     networks: 
       - app-network
     depends_on:
