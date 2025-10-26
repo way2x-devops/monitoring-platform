@@ -1,19 +1,29 @@
 import docker
 import time
-
+import redis
+import json
 def main():
     client = docker.from_env()
     print("Docker Monitor started...")
-    
+    r=redis.Redis(host='redis', port=6379, decode_responses=True)
     while True:
         try:
             containers = client.containers.list(all=True)
-            print(f" Found {len(containers)} containers:")
+            containers_data = []
             
             for container in containers:
-                print(f"  - {container.name}: {container.status}")
+                containers_data.append({
+                    "name": container.name,
+                    "status": container.status,
+                    "image": container.image.tags[0] if container.image.tags else "unknown",
+                    "id": container.short_id
+                })
             
-            print("---")
+            # Сохраняем в Redis
+            r.set("containers_status", json.dumps(containers_data))
+            r.set("last_update", time.time())
+            
+            print(f"Updated {len(containers_data)} containers in Redis")
             time.sleep(10)
             
         except Exception as e:

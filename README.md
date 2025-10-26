@@ -80,3 +80,10 @@ Python Decouple 3.8+     - Управление конфигурацией
 Pytest 7.4+              - Тестирование (опционально)
 Black 23.9+              - Форматирование кода
 Flake8 6.1+              - Линтинг
+
+
+
+logic of docker logs
+
+docker-collector  ->  redis  <-   backend    api
+ (writing data)       (cash)      (reading data)
