@@ -1,26 +1,26 @@
 version: '3.8'
 services:
 #basement
-  nginx-ssl:
-    container_name: ssl-nginx_app
-    build: ./nginx
+  nginx:
+    image: nginx:alpine
     ports:
       - "80:80"
-      - "443:443"
     volumes:
-      - ./frontend/build:/var/www/frontend
-    networks: 
-      - app-network
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
-      - 'backend'
-      - 'frontend'
+      - frontend
+      - backend
+    networks:
+      - app-network
   frontend:
-    container_name: frontend_container_app
-    networks: 
-      - app-network
     build: ./frontend
+    container_name: frontend_container_app
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
     depends_on:
-      - 'backend'
+      - backend
 
   backend:
     container_name: backend_container_app
