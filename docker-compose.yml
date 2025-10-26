@@ -77,14 +77,16 @@ services:
 #monitoring
   worker:
     build: ./backend
+    container_name: worker_app_monitoring
     command: python worker.py
-    container_name: worker_app
-    environment:
-      - REDIS_URL=redis://redis:6379
-    networks: 
+    networks:
       - app-network
     depends_on:
-      - 'redis'
+      - redis
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql://app_user:app_pass@postgres:5432/postgres_db
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
 
   monitoring-collector: 
     container_name: collector_container_app

@@ -5,21 +5,6 @@ import json
 import os
 import requests
 
-def save_to_database(containers_data):
-    try:
-        # Отправляем данные в backend для сохранения в БД
-        response = requests.post(
-            "http://backend:8000/api/metrics/containers",
-            json=containers_data,
-            timeout=5
-        )
-        if response.status_code == 200:
-            print("✅ Data saved to PostgreSQL")
-        else:
-            print(f"❌ Failed to save data: {response.status_code}")
-    except Exception as e:
-        print(f"❌ Database save error: {e}")
-
 def main():
     client = docker.from_env()
     print("🚀 Docker Monitor started...")
@@ -45,16 +30,12 @@ def main():
                     "id": container.short_id
                 })
             
-            # Сохраняем в Redis (для текущих данных)
+            # Сохраняем в Redis 
             r.set("containers_status", json.dumps(containers_data))
             r.set("last_update", time.time())
             
-            # Сохраняем в PostgreSQL (для истории)
-            save_to_database(containers_data)
-            
             print(f"📊 Updated {len(containers_data)} containers")
-            time.sleep(30)  # Сохраняем каждые 30 секунд
-            
+            time.sleep(30)
         except Exception as e:
             print(f"❌ Error: {e}")
             time.sleep(5)
