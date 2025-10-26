@@ -1,8 +1,112 @@
 version: '3.8'
 services:
-  nginx:
+#basement
+  nginx-ssl:
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend/build:/var/www/frontend
+    networks: app-network
+    depends_on:
+      - 'backend'
+      - 'frontend'
   frontend:
+    networks: app-network
+    build: ./frontend
+    depends_on:
+      - 'backend'
+
   backend:
-  prometheus:
-  db:
-  
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgresql://app_user:app_pass@postgres:5432/postgres_db
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8000:8000"
+    networks: app-network
+    depends_on:
+      - 'postgres'
+      - 'redis'
+  postgres:
+    image: postgres:15
+    networks: app-network
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_pass
+      POSTGRES_DB: postgres_db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U app_user -d postgres_db" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+  redis:
+    networks: app-network
+    image: redis:5.0.1
+    container_name: redis_container
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_USER=${REDIS_USER}
+      - REDIS_USER_PASSWORD=${REDIS_USER_PASSWORD}
+    ports:
+      - "6380:6379"
+    volumes:
+      - ./redisdata:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    command: >
+      sh -c '
+        mkdir -p /usr/local/etc/redis &&
+        echo "bind 0.0.0.0" > /usr/local/etc/redis/redis.conf &&
+        echo "requirepass $REDIS_PASSWORD" >> /usr/local/etc/redis/redis.conf &&
+        echo "appendonly yes" >> /usr/local/etc/redis/redis.conf &&
+        echo "appendfsync everysec" >> /usr/local/etc/redis/redis.conf &&
+        echo "user default on nopass ~* +@all" > /usr/local/etc/redis/users.acl &&
+        echo "user $REDIS_USER on >$REDIS_USER_PASSWORD ~* +@all" >> /usr/local/etc/redis/users.acl &&
+        redis-server /usr/local/etc/redis/redis.conf --aclfile /usr/local/etc/redis/users.acl
+      '
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+
+#monitoring
+  worker:
+    build: ./backend
+    command: python worker.py
+    environment:
+      - REDIS_URL=redis://redis:637
+    networks: app-network
+    depends_on:
+      - 'redis'
+
+  monitoring-collector: 
+    networks: app-network
+    build: ./monitoring-collector
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  scheduler:
+    networks: app-network
+    build: ./backend  
+    command: python scheduler.py
+
+networks:
+  - app-network
+
+volumes:
+  postgres_data:
+  redisdata:
