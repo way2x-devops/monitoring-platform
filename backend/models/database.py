@@ -1,13 +1,13 @@
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 import datetime
 
-# SQLite для тестирования
-#DATABASE_URL = "sqlite:///./test.db"
-# postgres
+# Подключение к PostgreSQL
 DATABASE_URL = "postgresql://app_user:app_pass@postgres:5432/postgres_db"
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 class ContainerHistory(Base):
@@ -28,12 +28,12 @@ class SystemMetrics(Base):
     memory_percent = Column(Float)
     disk_usage = Column(Float)
 
+# Создание таблиц
 def create_tables():
     Base.metadata.create_all(bind=engine)
 
+# Dependency для получения сессии БД
 def get_db():
-    from sqlalchemy.orm import sessionmaker
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = SessionLocal()
     try:
         yield db
