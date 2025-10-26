@@ -19,7 +19,7 @@ def main():
                     "id": container.short_id
                 })
             
-            # Сохраняем в Redis
+            # ->Redis
             r.set("containers_status", json.dumps(containers_data))
             r.set("last_update", time.time())
             

@@ -16,7 +16,7 @@ r = redis.Redis(host='redis', port=6379, decode_responses=True)
 @app.get("/api/containers")
 async def get_containers():
     try:
-        # Читаем данные из Redis
+        # Redis<-api
         data = r.get("containers_status")
         if data:
             return json.loads(data)

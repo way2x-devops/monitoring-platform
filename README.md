@@ -87,3 +87,15 @@ logic of docker logs
 
 docker-collector  ->  redis  <-   backend    api
  (writing data)       (cash)      (reading data)
+
+
+
+WORKER IS THE GUY WHO SAVE DATA THAT I NEED
+it will be sort a data and save it from redis to postgres
+
+logic:
+
+docker-collector -> redis <-   backend api
+                      |
+                      V
+                    worker -> postgres
